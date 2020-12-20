@@ -11,9 +11,13 @@
 #include <stddef.h>
 #include <pcap.h>
 #include "Box.h"
+#include "Global.h"
+#include "Heap.h"
 
 const char *LIBRARY_FILES[] = {
+    "./libMatchFunc.so",
     "./libLinkFunc.so",
+    "./libTableFunc.so",
     NULL,
 };
 
@@ -38,7 +42,7 @@ typedef struct
 {
     Library *libraries;
     int libraryCount;
-    int useSandbox;
+    int safeMode;
     size_t totalSize;
 } OnPacketArgument;
 
@@ -49,7 +53,7 @@ void onPacket(u_char *raw, const struct pcap_pkthdr *header, const u_char *packe
     memcpy(packetBuffer, packet, header->caplen);
     for (int i = 0; i < arg->libraryCount; i += 1)
     {
-        if (arg->useSandbox)
+        if (arg->safeMode)
         {
             PreExecute(arg->libraries[i].protected.box);
         }
@@ -60,19 +64,28 @@ void onPacket(u_char *raw, const struct pcap_pkthdr *header, const u_char *packe
 
 int main(int argc, const char *argv[])
 {
+#ifdef NOMALLOC_GLOBAL_MODIFY
+    void *mem = memalign(getpagesize(), 2u << 30u);
+    SetCurrentHeap(CreateHeap(mem, 2u << 30u));
+#endif
+
     if (argc < 3)
     {
-        printf("usage: %s [sandbox|bare] [path to pcap file]\n", argv[0]);
+        printf("usage: %s [safe|bare] [path to pcap file]\n", argv[0]);
         return 0;
     }
-    int useSandbox;
-    if (strcmp(argv[1], "sandbox") == 0)
+    int safeMode;
+    if (strcmp(argv[1], "safe") == 0)
     {
-        useSandbox = 1;
+#ifdef NOMALLOC_GLOBAL_MODIFY
+        fprintf(stderr, "safe mode disabled in global modified build\n");
+        return 1;
+#endif
+        safeMode = 1;
     }
     else if (strcmp(argv[1], "bare") == 0)
     {
-        useSandbox = 0;
+        safeMode = 0;
     }
     else
     {
@@ -85,7 +98,7 @@ int main(int argc, const char *argv[])
     int libraryCount = 0;
     for (int i = 0; LIBRARY_FILES[i]; i += 1, libraryCount += 1)
     {
-        if (useSandbox)
+        if (safeMode)
         {
             libraries[i].protected.box = CreateBox(LIBRARY_FILES[i], 1u << 30u);
             libraries[i].protected.address =
@@ -110,7 +123,7 @@ int main(int argc, const char *argv[])
             libraries[i].process = dlsym(libraries[i].bare, "ProcessPacket");
         }
     }
-    if (useSandbox)
+    if (safeMode)
     {
         libraries[libraryCount].protected.box = NULL;
     }
@@ -127,7 +140,7 @@ int main(int argc, const char *argv[])
     OnPacketArgument arg = {
         .libraries = libraries,
         .libraryCount = libraryCount,
-        .useSandbox = useSandbox,
+        .safeMode = safeMode,
         .totalSize = 0};
     pcap_loop(handle, 0, onPacket, (u_char *)&arg);
     clock_gettime(CLOCK_REALTIME, &finishTime);
@@ -139,7 +152,7 @@ int main(int argc, const char *argv[])
     pcap_close(handle);
     for (int i = 0; i < libraryCount; i += 1)
     {
-        if (useSandbox)
+        if (safeMode)
         {
             ReleaseBox(libraries[i].protected.box);
             free(libraries[i].protected.address);

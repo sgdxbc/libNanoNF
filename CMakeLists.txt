@@ -34,8 +34,8 @@ add_test(NAME TestHeap COMMAND TestHeap)
 
 add_library(_1 SHARED Examples/Library/lib1.c) # maybe better name later
 
-add_library(HashFunc SHARED Examples/Library/hash.cpp)
-set_property(TARGET HashFunc PROPERTY CXX_STANDARD 14)
+add_library(TableFunc SHARED Examples/Library/Table.cpp)
+set_property(TARGET TableFunc PROPERTY CXX_STANDARD 14)
 
 find_package(PCRE2 REQUIRED)
 add_library(MatchFunc SHARED Examples/Library/Match.c)
@@ -53,13 +53,21 @@ target_include_directories(OneBoxOneFuncOnce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/
 target_link_libraries(OneBoxOneFuncOnce NoMalloc)
 
 find_package(PCAP REQUIRED)
-add_executable(NFVDemo Examples/nfv.c)
-target_include_directories(NFVDemo PUBLIC 
+add_executable(NFVBench Examples/NFVBench.c)
+target_include_directories(NFVBench PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}/Include
     ${PCAP_INCLUDE_DIR}
 )
-target_link_libraries(NFVDemo NoMalloc ${CMAKE_DL_LIBS} ${PCAP_LIBRARY})
+target_link_libraries(NFVBench NoMalloc ${CMAKE_DL_LIBS} ${PCAP_LIBRARY})
 
-add_executable(UtilRun utilrun.c)
+add_library(UtilRun Source/UtilRun.c)
 target_include_directories(UtilRun PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Include)
-target_link_libraries(UtilRun NoMalloc MatchFunc)
+target_link_libraries(UtilRun NoMalloc)
+
+add_executable(NFVBenchM Examples/NFVBench.c)
+target_compile_definitions(NFVBenchM PRIVATE NOMALLOC_GLOBAL_MODIFY)
+target_include_directories(NFVBenchM PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/Include
+    ${PCAP_INCLUDE_DIR}
+)
+target_link_libraries(NFVBenchM NoMalloc UtilRun ${CMAKE_DL_LIBS} ${PCAP_LIBRARY})

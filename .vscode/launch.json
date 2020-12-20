@@ -25,11 +25,31 @@
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {
-            "name": "Launch NFVDemo",
+            "name": "Launch NFVBench",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/NFVDemo",
-            "args": ["sandbox", "~/Desktop/maccdc2011_00013_20110312202724.pcap"],
+            "program": "${workspaceFolder}/build/NFVBench",
+            "args": ["safe", "~/Desktop/maccdc2011_00013_20110312202724.pcap"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Launch NFVBenchM",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/NFVBenchM",
+            "args": ["bare", "~/Desktop/maccdc2011_00013_20110312202724.pcap"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

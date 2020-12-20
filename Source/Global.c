@@ -16,6 +16,10 @@ Raw GlobalMalloc(Size size)
 
 Raw GlobalRealloc(Raw object, Size size)
 {
+    if (!object)
+    {
+        return NULL;
+    }
     return ResizeObject(globalCurrent, object, size);
 }
 
@@ -26,5 +30,8 @@ Raw GlobalCalloc(Size count, Size size)
 
 void GlobalFree(Raw object)
 {
-    return ReleaseObject(globalCurrent, object);
+    if (object)
+    {
+        return ReleaseObject(globalCurrent, object);
+    }
 }

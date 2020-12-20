@@ -19,10 +19,10 @@ void InitializeFunction()
     PCRE2_SIZE errorOffset;
     for (int i = 0; i < 4; i += 1)
     {
-        printf("[match] compile re\n");
+        // printf("[match] compile re\n");
         re[i] = pcre2_compile(
             patterns[i], PCRE2_ZERO_TERMINATED, 0, &errorNumber, &errorOffset, NULL);
-        printf("[match] compile done\n");
+        // printf("[match] compile done\n");
         if (!re[i])
         {
             PCRE2_UCHAR buffer[256];
